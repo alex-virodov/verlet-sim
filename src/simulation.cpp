@@ -1,14 +1,15 @@
-#include <string.h>
+#include <string>
 #include <math.h>
 
 #include "simulation.h"
 
 //=====================================================================
 /** Add a particle to the simulation */
-Particle& Simulation::addParticle(const char* elementName, double x, double vx, double y, double vy)
+Particle& Simulation::addParticle(const std::string& elementName, 
+	double x, double vx, double y, double vy)
 {
 	for (Element::Itr element = elements.begin(); element != elements.end(); element++) {
-		if (strcmp(element->name, elementName) == 0) {
+		if (element->name == elementName) {
 			// Found the element, add particle
 			particles.push_back(Particle(&*element, x, vx, y, vy));
 			return particles[particles.size()-1];
@@ -91,8 +92,6 @@ void  Simulation::microstepFirst()
 		particles[i].px = particles[i].x;
 		particles[i].py = particles[i].y;
 
-		particles[i].px = particles[i].x;
-
 		double forceScale = dt_squared_over2 / particles[i].element->mass;
 
 		// Approximate x(dt) ~= x(0) + v(0)*dt + [A(x(0))*dt^2]/2
@@ -112,7 +111,10 @@ void   Simulation::computeForces()
 	{
 		particles[i].fx = 0.0;
 		particles[i].fy = 0.0;
+	}
 
+	for (int i = 0; i < nParticles; i++) 
+	{
 		forceBox(&particles[i]);
 
 		for (int j = i+1; j < nParticles; j++) {
@@ -202,39 +204,3 @@ Frame Simulation::step(int nMicroSteps)
 
 	return frame;
 }
-
-//=====================================================================
-/** Output the frame to a stream */
-std::ostream& operator<<(std::ostream& os, const Frame& frame)
-{
-	os << "frame:" << frame.time << std::endl
-	   << "box:"   << frame.simulation->boxSize << std::endl;
-
-	os << "elements:" << frame.simulation->elements.size() << std::endl;
-
-	for (Element::CItr elem  = frame.simulation->elements.begin(); 
-		               elem != frame.simulation->elements.end(); 
-				       elem++) 
-	{
-		os << "name:"   << elem->name   << std::endl
-		   << "mass:"   << elem->mass   << std::endl
-		   << "charge:" << elem->charge << std::endl
-		   << "radius:" << elem->radius << std::endl;
-	}
-
-
-
-	os << "particles:" << frame.simulation->particles.size() << std::endl;
-
-	for (Particle::CItr p  = frame.simulation->particles.begin(); 
-		                p != frame.simulation->particles.end(); 
-						p++) 
-	{
-		os << "x:" << p->x << std::endl
-		   << "y:" << p->y << std::endl
-		   << "e:" << p->element->name << std::endl;
-	}
-
-	return os;
-}
-

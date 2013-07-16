@@ -75,12 +75,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\frame.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\simulation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\bond.h" />
     <ClInclude Include="..\src\element.h" />
+    <ClInclude Include="..\src\frame.h" />
     <ClInclude Include="..\src\particle.h" />
     <ClInclude Include="..\src\simulation.h" />
   </ItemGroup>

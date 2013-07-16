@@ -2,36 +2,11 @@
 #define __SIMULATION_H__
 
 #include <vector>
-#include <ostream>
+#include <istream>
 
 #include "element.h"
 #include "particle.h"
-
-class Simulation;
-
-//=====================================================================
-/** Describes a point in computation (time, energy, particle states) */
-class Frame
-{
-public:
-	const double time;
-
-	double kineticEnergy;
-	double potentialEnergy;
-
-	const Simulation* const simulation;
-
-	/** Construct a frame from the current state of the simulation.
-	*   Note: The frame is not copying the particle states, so it must be
-	*         written out before simulation proceeds 
-	*/
-	Frame(double time, const Simulation* simulation) :
-		time(time), simulation(simulation) {};
-};
-
-/** Output the frame to a stream */
-std::ostream& operator<<(std::ostream& os, const Frame& frame);
-
+#include "frame.h"
 
 //=====================================================================
 /** Contains all information needed to run a simulation */
@@ -40,9 +15,9 @@ class Simulation
 	double time;          //< Current simulation time
 
 public:
-	const double dt;      //< Time step
-	const double boxSize; //< Size of the simulation box
-	const double boxK;    //< Force constant for box spring
+	double dt;      //< Time step
+	double boxSize; //< Size of the simulation box
+	double boxK;    //< Force constant for box spring
 
 	// See http://en.wikipedia.org/wiki/Verlet_integration#Applications
 	double f1;            //< Verlet friction constant
@@ -57,10 +32,17 @@ public:
 	{ }
 
 	/** Add a particle to the simulation */
-	Particle& addParticle(const char* elementName, double x, double vx, double y, double vy);
+	Particle& addParticle(const std::string& elementName, 
+		double x, double vx, double y, double vy);
 
 	/** Make a computation step and return the resulting frame. */
 	Frame step(int nMicroSteps);
+
+	/** Read a simulation setup from the given stream */
+	// Note: implemented in frame.cpp to keep reading code close to writing code.
+	//       Couldn't make 'Simulation Frame::read()' because of circular deps
+	//       between Frame and Simulation.
+	std::istream& operator<< (std::istream& is);
 
 private:
 	// Box forces and potential

@@ -9,22 +9,24 @@ class TextStream:
 		self.f = fileobject
 
 	def nextNamedToken(self, expected):
-		while True:
-			(name, *rest) = self.nextToken()
-			if (name != expected):
-				raise Exception('Expected token [' + expected + ']'
-							  + ' in line [' + line + ']')
-
-			return rest[0] if len(rest) == 1 else rest
+		token = self.nextToken()
+		start_line = self.line
+		
+		# Search ahead to see if some next token is the right one
+		# (skip unexpected tokens)
+		while (token[0] != expected):
+				token = self.nextToken()
+			
+		return token[1]
 
 	def nextToken(self):
 		while True:
-			line = self.f.readline()
+			self.line = self.f.readline()
 
-			if (len(line) == 0):
+			if (len(self.line) == 0):
 				raise IOError('End of file')
 
-			ss = [s.strip() for s in line.split(':') ]
+			ss = [s.strip() for s in self.line.split(':') ]
 			if (len(ss) > 1):
 				return ss
 
@@ -38,7 +40,7 @@ class Box:
 		self.size = size
 
 	def fromStream(stream):
-		return Box(float(stream.nextNamedToken('box')))
+		return Box(2*float(stream.nextNamedToken('box')))
 
 	def computeScale(self, canvas, margin):
 		return (canvas.width / (1+margin)) / self.size
@@ -52,45 +54,63 @@ class Vector2d:
 	def __init__(self, x, y):
 		self.x = x
 		self.y = y
-		self.size = 0.1
+		
+class Element:
+	def __init__(self, name, mass, charge, radius):
+		self.name   = name
+		self.mass   = mass
+		self.charge = charge
+		self.radius = radius
+	
+	def fromStream(stream):
+		return Element(
+			name  =stream.nextNamedToken('name'),
+			mass  =float(stream.nextNamedToken('mass')),
+			charge=float(stream.nextNamedToken('charge')),
+			radius=float(stream.nextNamedToken('radius')))
 
+	def elementsFromStream(stream):
+		num_elements = int(stream.nextNamedToken('elements'))
+		return [ Element.fromStream(stream) for i in range(num_elements)]
+			
 class Particle (Vector2d):
-	def __init__(self, x, y, m):
+	def __init__(self, x, y, element):
 		self.x = x
 		self.y = y
-		self.m = m
-		self.element = int(m)
+		self.element = element
 
-		self.size = 0.1
+		self.size = element.radius
 
 	def draw(self, canvas):
 		canvas.create_oval(
 			self.x - self.size, self.y - self.size,
 			self.x + self.size, self.y + self.size)
 
-	def fromStream(stream):
+	def fromStream(elements, stream):
 		return Particle(
+			element=elements[stream.nextNamedToken('element')],
 			x=float(stream.nextNamedToken('x')), 
-			y=float(stream.nextNamedToken('y')), 
-			m=float(stream.nextNamedToken('m')))
+			y=float(stream.nextNamedToken('y')))
 
-	def particlesfromStream(stream):
+	def particlesFromStream(elements, stream):
 		num_particles = int(stream.nextNamedToken('particles'))
-		return [ Particle.fromStream(stream) for i in range(num_particles)]
+		return [ Particle.fromStream(elements, stream) for i in range(num_particles)]
 
 class Frame:
-	def __init__(self, time, box, particles):
+	def __init__(self, time, box, elements, particles):
 		self.time = time
 		self.box  = box
+		self.elements  = elements
 		self.particles = particles
 
 	def fromStream(stream):
 		time = float(stream.nextNamedToken('frame'))
+		box  = Box.fromStream(stream)
+		elements = { e.name : e for e in Element.elementsFromStream(stream) }
+		
 		return Frame(
-			time   = time,
-			box	   = Box.fromStream(stream),
-			particles = Particle.particlesfromStream(stream)
-			)
+			time = time, box = box, elements  = elements,
+			particles = Particle.particlesFromStream(elements, stream))
 
 	def draw(self, canvas):
 		self.box.draw(canvas)

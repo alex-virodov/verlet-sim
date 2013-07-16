@@ -20,7 +20,7 @@ struct Particle
 	double px; ///< Previous position (and initial velocity)
 	double py;
 
-	double fx; ///< Force actin on this particle
+	double fx; ///< Force acting on this particle
 	double fy;
 
 	/** Bond information */
