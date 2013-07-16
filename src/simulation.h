@@ -57,7 +57,7 @@ public:
 	{ }
 
 	/** Add a particle to the simulation */
-	Particle& addParticle(char* elementName, double x, double vx, double y, double vy);
+	Particle& addParticle(const char* elementName, double x, double vx, double y, double vy);
 
 	/** Make a computation step and return the resulting frame. */
 	Frame step(int nMicroSteps);

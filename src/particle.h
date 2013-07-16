@@ -13,7 +13,7 @@ struct Particle
 	typedef std::vector<Particle>::iterator       Itr;
 	typedef std::vector<Particle>::const_iterator CItr;
 
-	const Element* const element; ///< The element description of this particle
+	const Element* element; ///< The element description of this particle
 
 	double x;  ///< Position
 	double y;  

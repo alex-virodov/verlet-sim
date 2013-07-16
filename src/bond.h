@@ -6,7 +6,7 @@
  *  constraint. */
 struct Bond
 {
-	typedef enum Type {
+	enum Type {
 		LINEAR, ANGLE
 	};
 
@@ -14,16 +14,16 @@ struct Bond
 	int  otherAtom;
 	
 	union {
-		struct Linear {
+		struct {
 			double dist;
 			double k;
-		};
+		} linear;
 
-		struct Angle {
+		struct {
 			int    cornerAtom;
 			double angle;
 			double k;
-		};
+		} angle;
 	};
 };
 

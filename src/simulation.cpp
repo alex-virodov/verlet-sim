@@ -1,8 +1,11 @@
+#include <string.h>
+#include <math.h>
+
 #include "simulation.h"
 
 //=====================================================================
 /** Add a particle to the simulation */
-Particle& Simulation::addParticle(char* elementName, double x, double vx, double y, double vy)
+Particle& Simulation::addParticle(const char* elementName, double x, double vx, double y, double vy)
 {
 	for (Element::Itr element = elements.begin(); element != elements.end(); element++) {
 		if (strcmp(element->name, elementName) == 0) {

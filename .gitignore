@@ -7,3 +7,8 @@ Debug
 /win32/*.suo
 
 /win32/*.user
+ipch
+
+/win32/*.opensdf
+
+/*.exe

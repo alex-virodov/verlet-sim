@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdlib.h>
 
 #include "element.h"
 #include "bond.h"
