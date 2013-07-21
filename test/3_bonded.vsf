@@ -9,16 +9,26 @@ charge:0
 radius:0.5
 ljeps:0.1
 
-particles:2
+particles:3
 element:X
-x:-2
-px:-2
+x:-1.1
+px:-1
 y:0
 py:0
 element:X
-x:2
-px:2
+x:1.1
+px:1
 y:0
+py:0
+element:X
+x:-1.1
+px:-1
+y:2.2
 py:0
 
-lbonds:0
+lbonds:1
+a:0
+b:1
+dist:2
+k:1e+1
+
