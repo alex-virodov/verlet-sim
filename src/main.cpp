@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string>
 #include <sstream>
+#include <fstream>
 
 #include "element.h"
 #include "bond.h"
@@ -15,13 +16,35 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+	double dt_override = -1;
+	char*  filename = 0;
+
+	for (int i = 1; i < argc; i++) {
+		if (argv[i][0] != '-' && filename == 0) {
+			filename = argv[i];
+		}
+
+		if (string(argv[i]) == "--dt" && i+1 < argc) {
+			dt_override = atof(argv[i+1]); i++;
+		}
+	}
+
 	Simulation sim(0, 0, 0);
 
 	try {
-		sim << cin;
+		if (filename == 0) {
+			sim << cin;
+		} else {
+			std::ifstream file(filename);
+			sim << file;
+		}
 	} catch (const std::string& error) {
 		cerr << "Exception: " << error << endl;
 		return 1;
+	}
+
+	if (dt_override > 0) {
+		sim.dt = dt_override;
 	}
 
 	cout << sim.step(1);
