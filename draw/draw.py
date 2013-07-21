@@ -96,25 +96,55 @@ class Particle (Vector2d):
 		num_particles = int(stream.nextNamedToken('particles'))
 		return [ Particle.fromStream(elements, stream) for i in range(num_particles)]
 
+class LBond:
+	def __init__(self, a, b, dist, k):
+		self.a    = a
+		self.b    = b
+		self.dist = dist
+		self.k    = k
+		
+	def draw(self, canvas):
+		canvas.create_line(self.a.x, self.a.y, self.b.x, self.b.y);
+		
+	def fromStream(particles, stream):
+		return LBond(
+			a    = particles[int(stream.nextNamedToken('a'))],
+			b    = particles[int(stream.nextNamedToken('b'))],
+			dist = float(stream.nextNamedToken('dist')),
+			k    = float(stream.nextNamedToken('k')))
+	
+	def bondsFromStream(particles, stream):
+		num_bonds = int(stream.nextNamedToken('lbonds'))
+		return [ LBond.fromStream(particles, stream) for i in range(num_bonds)]
+		
+		
 class Frame:
-	def __init__(self, time, box, elements, particles):
+	def __init__(self, time, box, elements, particles, lbonds):
 		self.time = time
 		self.box  = box
 		self.elements  = elements
 		self.particles = particles
+		self.lbonds    = lbonds
 
 	def fromStream(stream):
 		time = float(stream.nextNamedToken('frame'))
 		box  = Box.fromStream(stream)
-		elements = { e.name : e for e in Element.elementsFromStream(stream) }
+		elements  = { e.name : e for e in Element.elementsFromStream(stream) }
+		particles = Particle.particlesFromStream(elements, stream)
+		lbonds    = LBond.bondsFromStream(particles, stream)
 		
 		return Frame(
 			time = time, box = box, elements  = elements,
-			particles = Particle.particlesFromStream(elements, stream))
+			particles = particles, lbonds = lbonds)
 
 	def draw(self, canvas):
 		self.box.draw(canvas)
-		pass
+
+		for particle in self.particles:
+			particle.draw(canvas)
+			
+		for lbond in self.lbonds:
+			lbond.draw(canvas)
 
 class DrawCanvas(Canvas):
 	def __init__(self, master, width, height, timer, drawFunction):
@@ -166,6 +196,13 @@ class DrawCanvas(Canvas):
 			y1*self.scale+self.cy, 
 			**options)
 
+	def create_line(self, x0, y0, x1, y1, **options):
+		Canvas.create_line(self, 
+			x0*self.scale+self.cx, 
+			y0*self.scale+self.cy, 
+			x1*self.scale+self.cx, 
+			y1*self.scale+self.cy, 
+			**options)
 
 
 
@@ -201,8 +238,6 @@ if __name__ == "__main__":
 		lframe = frames[0]
 		canvas.scale = lframe.box.computeScale(canvas, margin)
 		lframe.draw(canvas)
-		for particle in lframe.particles:
-			particle.draw(canvas)
 
 		canvas.create_text(10, 10, anchor="nw", text="time: %0.2f" % lframe.time)
 		#canvas.create_rectangle(w/4, h/4, 3*w/4, 3*h/4, fill="blue")
