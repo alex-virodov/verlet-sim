@@ -25,7 +25,12 @@ public:
 
 	std::vector<Particle> particles; //< Particles in simulation
 	std::vector<Element>  elements;  //< All used elements in simulation
+	
+	std::vector<std::vector<LinearBond> > linearBonds;     //< All Linear bonds in simulation
 
+	// char*                 compactedLinearBonds; //< A compacted linear bond structure (see makeCompactedBonds)
+	// CompactedLinearBond*  currentLinear;
+	
 	/** Construct a simulation */
 	Simulation(double dt, double boxSize, double boxK) :
 		dt(dt), boxSize(boxSize), boxK(boxK), f1(1.0), f2(2.0), time(0.0)
@@ -34,6 +39,13 @@ public:
 	/** Add a particle to the simulation */
 	Particle& addParticle(const std::string& elementName, 
 		double x, double vx, double y, double vy);
+
+	/** Add a bond between particles */
+	LinearBond& addLinearBond(int a, int b, double dist, double k);
+
+	/** Compact bonds before simulation */
+	void makeCompactedBonds();
+
 
 	/** Make a computation step and return the resulting frame. */
 	Frame step(int nMicroSteps);
@@ -50,14 +62,17 @@ private:
 	double potentialBox(Particle* const particle);
 
 	// Pairwise (LJ, bond, electrostatic) forces and potential
-	void   forcePairwise    (Particle* const pi, Particle* const pj);
-	double potentailPairwise(Particle* const pi, Particle* const pj);
+	void   forceLJ          (Particle& pi, Particle& pj, double dx, double dy);
+	void   forceLinearBond  (Particle& pi, Particle& pj, double dx, double dy, const LinearBond& bond);
+	// void   forcePairwise    (int i, int j, Particle* const pi, Particle* const pj);
+	// double potentailPairwise(Particle* const pi, Particle* const pj);
 
 	// Implementation of the step function
 	void   computeForces();
 	void   microstepFirst();
 	void   microstep();
 	double kineticEnergyStep();
+
 };
 
 #endif /*__SIMULATION_H__*/

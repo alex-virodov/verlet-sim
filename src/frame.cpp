@@ -100,6 +100,7 @@ std::ostream& operator<<(std::ostream& os, const Frame& frame)
 		   << "radius:" << elem->radius << std::endl
 		   << "ljeps:"  << elem->ljEps  << std::endl;
 	}
+	os << std::endl;
 
 
 
@@ -115,6 +116,31 @@ std::ostream& operator<<(std::ostream& os, const Frame& frame)
 		   << "y:"  << p->y  << std::endl
 		   << "py:" << p->py << std::endl;
 	}
+	os << std::endl;
+
+	int nbonds = 0;
+	for (unsigned int a = 0; a < frame.simulation->linearBonds.size(); a++) {
+		for (LinearBond::CItr b  = frame.simulation->linearBonds[a].begin(); 
+			                  b != frame.simulation->linearBonds[a].end(); 
+							  b++) {
+			nbonds++;
+		}
+	}
+
+	os << "lbonds:" << nbonds << std::endl;
+
+	for (unsigned int a = 0; a < frame.simulation->linearBonds.size(); a++) {
+		for (LinearBond::CItr b  = frame.simulation->linearBonds[a].begin(); 
+			                  b != frame.simulation->linearBonds[a].end(); 
+							  b++)
+		{
+			os << "a:"    << a                << std::endl
+			   << "b:"    << b->otherParticle << std::endl
+			   << "dist:" << b->dist          << std::endl
+			   << "k:"    << b->k             << std::endl;
+		}
+	}
+	os << std::endl;
 
 	return os;
 }
@@ -153,6 +179,17 @@ std::istream& Simulation::operator<< (std::istream& is)
 		double      py      = Token::readExpectedDouble(is, "py");
 
 		addParticle(element, x, px, y, py);
+	}
+
+	int nlbonds = atoi(Token::readExpected(is, "lbonds").c_str());
+
+	for (int i = 0; i < nlbonds; i++) {
+		double      a       = Token::readExpectedDouble(is, "a");
+		double      b       = Token::readExpectedDouble(is, "b");
+		double      dist    = Token::readExpectedDouble(is, "dist");
+		double      k       = Token::readExpectedDouble(is, "k");
+
+		addLinearBond((int)a, (int)b, dist, k);
 	}
 
 	return is;

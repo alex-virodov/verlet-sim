@@ -23,10 +23,6 @@ struct Particle
 	double fx; ///< Force acting on this particle
 	double fy;
 
-	/** Bond information */
-	int         nbonds; 
-	const Bond* bonds;
-
 	/** Construct a particle of a given element */
 	Particle(const Element* element, double x, double vx, double y, double vy) : 
 		element(element), x(x), y(y), px(vx), py(vy) {};

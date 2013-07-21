@@ -1,5 +1,6 @@
 #include <string>
 #include <math.h>
+#include <algorithm>
 
 #include "simulation.h"
 
@@ -12,11 +13,26 @@ Particle& Simulation::addParticle(const std::string& elementName,
 		if (element->name == elementName) {
 			// Found the element, add particle
 			particles.push_back(Particle(&*element, x, vx, y, vy));
+			linearBonds.push_back(std::vector<LinearBond>());
+
 			return particles[particles.size()-1];
 		}
 	}
 
 	throw std::string("Cannot find element [").append(elementName).append("]");
+}
+
+//=====================================================================
+/** Add a bond between particles */
+LinearBond& Simulation::addLinearBond(int a, int b, double dist, double k)
+{
+	LinearBond bond;
+	bond.otherParticle = b;
+	bond.k             = k;
+	bond.dist          = dist;
+
+	linearBonds[a].push_back(bond);
+	return linearBonds[a][linearBonds[a].size()-1];
 }
 
 //=====================================================================
@@ -37,20 +53,36 @@ double Simulation::potentialBox(Particle* const p)
 }
 
 //=====================================================================
-/** Compute the pairwise forces between two particles */
-void   Simulation::forcePairwise    (Particle* const pi, Particle* const pj)
+/** Compact the linear bonds into an array */
+void Simulation::makeCompactedBonds()
 {
-	double dx = pi->x - pj->x;
-	double dy = pi->y - pj->y;
+	int linearSize = 0;
+
+	int lastThisParticle = -1;
+
+/*	for (std::vector<std::vector<Bond> >::iterator from = bonds.begin(); from != bonds.end(); from++)
+	{
+		int numLinear = 0;
+		int numAngle  = 0;
+
+		for (std::vector<Bond>::iterator itr = from->begin(); itr != from->end(); itr++) {
+			if      (itr->type == Bond::LINEAR) { numLinear++; }
+			else if (itr->type == Bond::ANGLE)  { numAngle++;  }
+		}
+	}*/
+}
+
+
+void Simulation::forceLJ(Particle& pi, Particle& pj, double dx, double dy)
+{
+	// TODO: if (invr < ljCutoffInv) continue;
+
+	// TODO: if (atomi->element == atomj->element)....
+
 
 	double invr = 1.0 / sqrt(dx*dx + dy*dy);
-
-	// if (invr < ljCutoffInv) continue;
-
-	// if (atomi->element == atomj->element)....
-
-	double sigma =     (pi->element->ljSigma + pj->element->ljSigma)/2;
-	double eps   = sqrt(pi->element->ljEps   + pj->element->ljEps);
+	double sigma =     (pi.element->ljSigma + pj.element->ljSigma)/2;
+	double eps   = sqrt(pi.element->ljEps   + pj.element->ljEps);
 
 	double sigma2 = sigma*sigma;
 	double sigma6 = sigma2*sigma2*sigma2;
@@ -65,10 +97,30 @@ void   Simulation::forcePairwise    (Particle* const pi, Particle* const pj)
 
 	double lj = eps * (-48 * sigma12 * invr14 + 24 * sigma6 * invr8);
 
-	pi->fx -= lj * dx;
-	pi->fy -= lj * dy;
-	pj->fx += lj * dx;
-	pj->fy += lj * dy;
+	pi.fx -= lj * dx;
+	pi.fy -= lj * dy;
+	pj.fx += lj * dx;
+	pj.fy += lj * dy;
+}
+
+void Simulation::forceLinearBond(Particle& pi, Particle& pj, double dx, double dy, const LinearBond& bond)
+{
+	double r = sqrt(dx*dx + dy*dy);
+
+	double f = bond.k * (1 - bond.dist / r);
+
+	pi.fx -= f * dx;
+	pi.fy -= f * dy;
+	pj.fx += f * dx;
+	pj.fy += f * dy;
+}
+
+#if 0
+//=====================================================================
+/** Compute the pairwise forces between two particles */
+void   Simulation::forcePairwise    (int i, int j, Particle* const pi, Particle* const pj)
+{
+	// Assuming index(pi) < index(pj)
 
 }
 
@@ -78,6 +130,7 @@ double Simulation::potentailPairwise(Particle* const pi, Particle* const pj)
 {
 	return 0;
 }
+#endif
 
 //=====================================================================
 /** Do the first step in simulation, assuming v(0) is in 'px' field */
@@ -117,8 +170,25 @@ void   Simulation::computeForces()
 	{
 		forceBox(&particles[i]);
 
-		for (int j = i+1; j < nParticles; j++) {
-			forcePairwise(&particles[i], &particles[j]);
+		std::vector<LinearBond>::iterator linearItr   = linearBonds[i].begin();
+		int                               linearLeft  = linearBonds[i].size();
+
+		for (int j = i+1; j < nParticles; j++) 
+		{
+			Particle& pi = particles[i];
+			Particle& pj = particles[j];
+
+			double dx = pi.x - pj.x;
+			double dy = pi.y - pj.y;
+
+			if (linearLeft > 0 && linearItr->otherParticle == j) {
+				forceLinearBond(pi, pj, dx, dy, *linearItr++);
+			} else {
+				forceLJ(pi, pj, dx, dy);
+			}
+
+			// bonditr = bonds[i].begin();
+			//forcePairwise(i, j, &particles[i], &particles[j]);
 		}
 	}
 }
